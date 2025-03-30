@@ -13,25 +13,28 @@ interface Task {
 const TaskList: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // Track if it's in edit mode
-  const [currentTask, setCurrentTask] = useState<Task | null>(null); // Store the task being edited
+  const [isEditMode, setIsEditMode] = useState(false); 
+  const [currentTask, setCurrentTask] = useState<Task | null>(null);
 
   useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = () => {
     fetch("http://localhost:5000/api/tasks")
       .then((res) => res.json())
       .then((data) => setTasks(data))
       .catch((err) => console.error("Error fetching tasks:", err));
-  }, []);
-
-  const handleAddTask = () => {
-    setIsEditMode(false); // For new task, we set edit mode to false
-    setCurrentTask(null); // No task for new task
-    setShowModal(true); // Show modal
   };
 
-  const handleEditTask = (id: number, updatedTask: { title: string; description: string; due_date: string }) => {
-    // Now handleEditTask takes id and updatedTask as parameters
-    fetch(`http://localhost:5000/api/tasks/${id}`, {
+  const handleAddTask = () => {
+    setIsEditMode(false);
+    setCurrentTask(null);
+    setShowModal(true);
+  };
+
+  const handleEditTask = (updatedTask: Task) => {
+    fetch(`http://localhost:5000/api/tasks/${updatedTask.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -39,23 +42,28 @@ const TaskList: React.FC = () => {
       body: JSON.stringify(updatedTask),
     })
       .then((res) => res.json())
-      .then((updatedTaskData) => {
-        setTasks(
-          tasks.map((task) =>
-            task.id === id ? { ...task, ...updatedTaskData } : task
+      .then(() => {
+        setTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.id === updatedTask.id ? updatedTask : task
           )
         );
         setShowModal(false);
+        fetchTasks();
       })
       .catch((err) => console.error("Error updating task:", err));
   };
 
   const handleTaskSubmit = (task: { title: string; description: string; due_date: string }) => {
+    if (!task.title || !task.description || !task.due_date || new Date(task.due_date).toString() === 'Invalid Date') {
+      alert("Please make sure all fields are filled out correctly, and the date is valid.");
+      return;
+    }
+  
     if (isEditMode && currentTask) {
-      // Update the existing task
-      handleEditTask(currentTask.id, task);
+      const updatedTask = { ...task, id: currentTask.id };
+      handleEditTask(updatedTask);
     } else {
-      // Create a new task
       fetch("http://localhost:5000/api/tasks", {
         method: "POST",
         headers: {
@@ -65,17 +73,24 @@ const TaskList: React.FC = () => {
       })
         .then((res) => res.json())
         .then((newTask) => {
-          setTasks([...tasks, newTask]);
+          setTasks((prevTasks) => [...prevTasks, newTask]);
           setShowModal(false);
+          fetchTasks();
         })
         .catch((err) => console.error("Error adding task:", err));
     }
   };
+  
 
-  const handleEditClick = (task: Task) => {
-    setIsEditMode(true); // Set edit mode to true for editing
-    setCurrentTask(task); // Set the current task being edited
-    setShowModal(true); // Show the modal for editing
+  const handleDeleteTask = (id: number) => {
+    fetch(`http://localhost:5000/api/tasks/${id}`, {
+      method: "DELETE",
+    })
+      .then(() => {
+        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+        fetchTasks();
+      })
+      .catch((err) => console.error("Error deleting task:", err));
   };
 
   return (
@@ -91,20 +106,13 @@ const TaskList: React.FC = () => {
             title={task.title}
             description={task.description}
             dueDate={task.due_date}
-            onUpdate={handleEditClick} // Pass handleEditClick to TaskCard
-            onDelete={(id) => {
-              fetch(`http://localhost:5000/api/tasks/${id}`, {
-                method: "DELETE",
-              })
-                .then(() => setTasks(tasks.filter((task) => task.id !== id)))
-                .catch((err) => console.error("Error deleting task:", err));
-            }}
+            onUpdate={handleEditTask}
+            onDelete={handleDeleteTask}
           />
         ))
       )}
       <FloatingButton onClick={handleAddTask} />
 
-      {/* CreateTaskModal */}
       <CreateTaskModal
         show={showModal}
         handleClose={() => setShowModal(false)}
@@ -113,6 +121,7 @@ const TaskList: React.FC = () => {
         initialTitle={currentTask?.title || ""}
         initialDescription={currentTask?.description || ""}
         initialDueDate={currentTask?.due_date || ""}
+        taskId={isEditMode ? currentTask?.id! : 0}
       />
     </div>
   );

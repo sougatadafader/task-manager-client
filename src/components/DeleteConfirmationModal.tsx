@@ -4,13 +4,13 @@ import { Modal, Button } from "react-bootstrap";
 interface DeleteConfirmationModalProps {
   show: boolean;
   handleClose: () => void;
-  handleConfirmDelete: () => void;
+  onConfirm: () => void; // Add onConfirm here
 }
 
 const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
   show,
   handleClose,
-  handleConfirmDelete,
+  onConfirm,
 }) => {
   return (
     <Modal show={show} onHide={handleClose}>
@@ -18,14 +18,14 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
         <Modal.Title>Confirm Deletion</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <p>Are you sure you want to delete this task?</p>
+        Are you sure you want to delete this task?
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="danger" onClick={handleConfirmDelete}>
-          Delete
-        </Button>
         <Button variant="secondary" onClick={handleClose}>
-          Cancel
+          Close
+        </Button>
+        <Button variant="danger" onClick={onConfirm}>
+          Delete
         </Button>
       </Modal.Footer>
     </Modal>

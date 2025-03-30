@@ -1,17 +1,8 @@
 import React, { useState } from "react";
 import { Card, Button } from "react-bootstrap";
 import { Pencil, Trash } from "react-bootstrap-icons";
-import CreateTaskModal from "./CreateTaskModal";
-import DeleteConfirmationModal from "./DeleteModal"; 
-
-interface TaskCardProps {
-  id: number;
-  title: string;
-  description: string;
-  dueDate: string;
-  onUpdate: (task: Task) => void;
-  onDelete: (id: number) => void;
-}
+import EditTaskModal from "./EditTaskModal"; // Updated to use the EditTaskModal
+import DeleteConfirmationModal from "./DeleteConfirmationModal";
 
 interface Task {
   id: number;
@@ -20,25 +11,35 @@ interface Task {
   due_date: string;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ id, title, description, dueDate, onUpdate, onDelete }) => {
+interface TaskCardProps {
+  id: number;
+  title: string;
+  description: string;
+  dueDate: string;
+  onUpdate: (updatedTask: Task) => void;
+  onDelete: (id: number) => void;
+}
+
+const TaskCard: React.FC<TaskCardProps> = ({
+  id,
+  title,
+  description,
+  dueDate,
+  onUpdate,
+  onDelete,
+}) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const handleEdit = () => {
-    setShowEditModal(true);
+  const handleEditSave = (updatedTask: Task) => {
+    const updatedTaskWithId = { ...updatedTask, id };
+    onUpdate(updatedTaskWithId);
+    setShowEditModal(false);
   };
 
   const handleDelete = () => {
-    setShowDeleteModal(true);
-  };
-
-  const handleConfirmDelete = () => {
-    onDelete(id); 
-    setShowDeleteModal(false); 
-  };
-
-  const handleCancelDelete = () => {
-    setShowDeleteModal(false); 
+    onDelete(id);
+    setShowDeleteModal(false);
   };
 
   return (
@@ -49,32 +50,32 @@ const TaskCard: React.FC<TaskCardProps> = ({ id, title, description, dueDate, on
         <Card.Text>
           <strong>Due:</strong> {new Date(dueDate).toLocaleString()}
         </Card.Text>
-        <Button variant="outline-primary" onClick={handleEdit}>
+        <Button variant="outline-primary" onClick={() => setShowEditModal(true)}>
           <Pencil /> Edit
         </Button>
-        <Button variant="outline-danger" className="ms-2" onClick={handleDelete}>
+        <Button
+          variant="outline-danger"
+          className="ms-2"
+          onClick={() => setShowDeleteModal(true)}
+        >
           <Trash /> Delete
         </Button>
       </Card.Body>
 
-      <CreateTaskModal
+      <EditTaskModal
         show={showEditModal}
         handleClose={() => setShowEditModal(false)}
-        onSave={(updatedTask) => {
-          onUpdate({ id, ...updatedTask });
-          setShowEditModal(false);
-        }}
-        isEditMode={true}
+        taskId={id}
         initialTitle={title}
         initialDescription={description}
         initialDueDate={dueDate}
+        onSave={handleEditSave}
       />
 
-      {/* DeleteConfirmationModal */}
       <DeleteConfirmationModal
         show={showDeleteModal}
-        handleClose={handleCancelDelete}
-        handleConfirmDelete={handleConfirmDelete}
+        handleClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
       />
     </Card>
   );
