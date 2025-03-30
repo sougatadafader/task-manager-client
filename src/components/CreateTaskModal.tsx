@@ -1,38 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 
 interface CreateTaskModalProps {
   show: boolean;
-  onClose: () => void;
-  onSubmit: (task: { title: string; description: string; due_date: string }) => void;
+  handleClose: () => void;
+  initialTitle?: string;
+  initialDescription?: string;
+  initialDueDate?: string;
+  onSave: (task: { title: string; description: string; due_date: string }) => void;
+  isEditMode?: boolean;
 }
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ show, onClose, onSubmit }) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
+const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
+  show,
+  handleClose,
+  initialTitle = "",
+  initialDescription = "",
+  initialDueDate = "",
+  onSave,
+  isEditMode = false,  // Default to false if not provided
+}) => {
+  const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription);
+  const [dueDate, setDueDate] = useState(initialDueDate);
 
-  const handleSubmit = () => {
-    if (!title.trim()) {
-      alert("Title is required");
-      return;
+  // Reset the fields when the modal is opened or closed
+  useEffect(() => {
+    if (!show) {
+      setTitle(initialTitle);
+      setDescription(initialDescription);
+      setDueDate(initialDueDate);
     }
-  
-    // Convert local date to UTC format
-    const utcDueDate = new Date(dueDate).toISOString();
-  
-    onSubmit({ title, description, due_date: utcDueDate });
-  
-    setTitle("");
-    setDescription("");
-    setDueDate("");
+  }, [show, initialTitle, initialDescription, initialDueDate]);
+
+  const handleSave = () => {
+    const updatedTask = {
+      title,
+      description,
+      due_date: dueDate,
+    };
+    onSave(updatedTask);  
   };
-  
 
   return (
-    <Modal show={show} onHide={onClose} centered>
+    <Modal show={show} onHide={handleClose}>
       <Modal.Header closeButton>
-        <Modal.Title>Create New Task</Modal.Title>
+        <Modal.Title>{isEditMode ? "Edit Task" : "Create Task"}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
@@ -40,18 +53,18 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ show, onClose, onSubm
             <Form.Label>Title</Form.Label>
             <Form.Control
               type="text"
-              placeholder="Enter task title"
               value={title}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter task title"
             />
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Description</Form.Label>
             <Form.Control
               as="textarea"
-              placeholder="Enter task description"
               value={description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter task description"
             />
           </Form.Group>
           <Form.Group className="mb-3">
@@ -59,17 +72,17 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ show, onClose, onSubm
             <Form.Control
               type="date"
               value={dueDate}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDueDate(e.target.value)}
+              onChange={(e) => setDueDate(e.target.value)}
             />
           </Form.Group>
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={onClose}>
-          Cancel
+        <Button variant="secondary" onClick={handleClose}>
+          Close
         </Button>
-        <Button variant="primary" onClick={handleSubmit}>
-          Create Task
+        <Button variant="primary" onClick={handleSave}>
+          {isEditMode ? "Save Changes" : "Create Task"}
         </Button>
       </Modal.Footer>
     </Modal>
