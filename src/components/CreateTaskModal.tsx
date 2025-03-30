@@ -17,12 +17,17 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ show, onClose, onSubm
       alert("Title is required");
       return;
     }
-
-    onSubmit({ title, description, due_date: dueDate });
+  
+    // Convert local date to UTC format
+    const utcDueDate = new Date(dueDate).toISOString();
+  
+    onSubmit({ title, description, due_date: utcDueDate });
+  
     setTitle("");
     setDescription("");
     setDueDate("");
   };
+  
 
   return (
     <Modal show={show} onHide={onClose} centered>
