@@ -2,13 +2,8 @@ import React, { useState, useEffect } from "react";
 import TaskCard from "../components/TaskCard";
 import FloatingButton from "../components/CreateTaskButton";
 import CreateTaskModal from "../components/CreateTaskModal";
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  due_date: string;
-}
+import { BASE_URL } from "../constants/Constants";
+import { Task } from "../types/Types";
 
 const TaskList: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -21,7 +16,7 @@ const TaskList: React.FC = () => {
   }, []);
 
   const fetchTasks = () => {
-    fetch("http://localhost:5000/api/tasks")
+    fetch(BASE_URL +"tasks")
       .then((res) => res.json())
       .then((data) => setTasks(data))
       .catch((err) => console.error("Error fetching tasks:", err));
@@ -34,7 +29,7 @@ const TaskList: React.FC = () => {
   };
 
   const handleEditTask = (updatedTask: Task) => {
-    fetch(`http://localhost:5000/api/tasks/${updatedTask.id}`, {
+    fetch(BASE_URL+ `tasks/${updatedTask.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -54,8 +49,8 @@ const TaskList: React.FC = () => {
       .catch((err) => console.error("Error updating task:", err));
   };
 
-  const handleTaskSubmit = (task: { title: string; description: string; due_date: string }) => {
-    if (!task.title || !task.description || !task.due_date || new Date(task.due_date).toString() === 'Invalid Date') {
+  const handleTaskSubmit = (task: { title: string; description: string; dueDate: string }) => {
+    if (!task.title || !task.description || !task.dueDate || new Date(task.dueDate).toString() === 'Invalid Date') {
       alert("Please make sure all fields are filled out correctly, and the date is valid.");
       return;
     }
@@ -64,7 +59,7 @@ const TaskList: React.FC = () => {
       const updatedTask = { ...task, id: currentTask.id };
       handleEditTask(updatedTask);
     } else {
-      fetch("http://localhost:5000/api/tasks", {
+      fetch(BASE_URL+"tasks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -83,7 +78,7 @@ const TaskList: React.FC = () => {
   
 
   const handleDeleteTask = (id: number) => {
-    fetch(`http://localhost:5000/api/tasks/${id}`, {
+    fetch(BASE_URL + `tasks/${id}`, {
       method: "DELETE",
     })
       .then(() => {
@@ -105,7 +100,7 @@ const TaskList: React.FC = () => {
             id={task.id}
             title={task.title}
             description={task.description}
-            dueDate={task.due_date}
+            dueDate={task.dueDate}
             onUpdate={handleEditTask}
             onDelete={handleDeleteTask}
           />
@@ -120,7 +115,7 @@ const TaskList: React.FC = () => {
         isEditMode={isEditMode}
         initialTitle={currentTask?.title || ""}
         initialDescription={currentTask?.description || ""}
-        initialDueDate={currentTask?.due_date || ""}
+        initialDueDate={currentTask?.dueDate || ""}
         taskId={isEditMode ? currentTask?.id! : 0}
       />
     </div>

@@ -3,13 +3,7 @@ import { Card, Button } from "react-bootstrap";
 import { Pencil, Trash } from "react-bootstrap-icons";
 import EditTaskModal from "./EditTaskModal"; // Updated to use the EditTaskModal
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  due_date: string;
-}
+import { Task } from "../types/Types";
 
 interface TaskCardProps {
   id: number;

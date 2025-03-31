@@ -8,11 +8,11 @@ interface EditTaskModalProps {
   initialTitle: string;
   initialDescription: string;
   initialDueDate: string;
-  onSave: (task: { id: number; title: string; description: string; due_date: string }) => void;
+  onSave: (task: { id: number; title: string; description: string; dueDate: string }) => void;
 }
 
 const EditTaskModal: React.FC<EditTaskModalProps> = ({
-  show,
+  show = false,
   handleClose,
   taskId,
   initialTitle,
@@ -29,7 +29,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       id: taskId,
       title,
       description,
-      due_date: dueDate,
+      dueDate: dueDate,
     };
     onSave(updatedTask);
     handleClose();

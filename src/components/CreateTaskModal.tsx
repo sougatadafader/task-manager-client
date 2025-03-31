@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  due_date: string;
-}
+import { Task } from "../types/Types";
 
 interface CreateTaskModalProps {
   show: boolean;
@@ -20,14 +14,14 @@ interface CreateTaskModalProps {
 }
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
-  show,
+  show = false,
   handleClose,
   initialTitle = "",
   initialDescription = "",
   initialDueDate = "",
   onSave,
-  isEditMode,
-  taskId,  // Access taskId here
+  isEditMode =false,
+  taskId,  
 }) => {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
@@ -35,10 +29,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [error, setError] = useState<string>(""); // State for storing error messages
 
   const handleSave = () => {
-    // Check if the title, description, and dueDate are non-empty
     if (!title.trim() || !description.trim() || !dueDate.trim()) {
       setError("Please fill in all the fields.");
-      return; // Stop further execution
+      return; 
     }
 
     // Validate the dueDate is not in the past
@@ -46,21 +39,19 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     const selectedDate = new Date(dueDate);
     if (selectedDate < currentDate) {
       setError("Due date cannot be in the past.");
-      return; // Stop further execution
+      return; 
     }
 
-    // Clear the error if everything is valid
     setError("");
 
-    // Now pass the updated task to onSave
     const updatedTask = {
-      id: taskId,  // Use taskId here
+      id: taskId,
       title,
       description,
-      due_date: dueDate,  // Use dueDate here
+      dueDate: dueDate,
     };
 
-    onSave(updatedTask);  // Pass updated task with id
+    onSave(updatedTask);
   };
 
   return (
