@@ -42,7 +42,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
         <Card.Title>{title}</Card.Title>
         <Card.Text>{description}</Card.Text>
         <Card.Text>
-          <strong>Due:</strong> {new Date(dueDate).toLocaleString()}
+          <strong>Due:</strong> {new Date(dueDate + "T00:00:00").toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          })}
         </Card.Text>
         <Button variant="outline-primary" onClick={() => setShowEditModal(true)}>
           <Pencil /> Edit

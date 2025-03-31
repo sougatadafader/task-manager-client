@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { Task } from "../types/Types";
-import { useEffect } from "react";
 
 interface CreateTaskModalProps {
   show: boolean;
@@ -11,7 +10,7 @@ interface CreateTaskModalProps {
   initialDueDate?: string;
   onSave: (updatedTask: Task) => void;
   isEditMode: boolean;
-  taskId: number;  // Add taskId as a prop
+  taskId: number;
 }
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
@@ -21,8 +20,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   initialDescription = "",
   initialDueDate = "",
   onSave,
-  isEditMode =false,
-  taskId,  
+  isEditMode = false,
+  taskId,
 }) => {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
@@ -32,35 +31,51 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   useEffect(() => {
     setTitle(initialTitle);
     setDescription(initialDescription);
-    setDueDate(initialDueDate);
+  
+    if (initialDueDate) {
+      try {
+        const parsed = new Date(initialDueDate);
+        const localDateString = parsed.toISOString().split("T")[0]; // YYYY-MM-DD
+        setDueDate(localDateString);
+      } catch {
+        setDueDate("");
+      }
+    } else {
+      setDueDate("");
+    }
+  
     setError("");
   }, [initialTitle, initialDescription, initialDueDate, show]);
+  
+  
 
   const handleSave = () => {
-    if (!title.trim() || !description.trim() || !dueDate.trim()) {
+    if (!title.trim() || !description.trim() || !dueDate?.trim()) {
       setError("Please fill in all the fields.");
-      return; 
+      return;
     }
-
-    // Validate the dueDate is not in the past
-    const currentDate = new Date();
-    const selectedDate = new Date(dueDate);
-    if (selectedDate < currentDate) {
+  
+    const selectedDate = new Date(`${dueDate}T12:00:00`);
+    const now = new Date();
+  
+    now.setHours(0, 0, 0, 0);
+  
+    if (selectedDate < now) {
       setError("Due date cannot be in the past.");
-      return; 
+      return;
     }
-
+  
     setError("");
-
-    const updatedTask = {
-      id: taskId,
-      title,
-      description,
-      dueDate: dueDate,
-    };
-
+  
+    const updatedTask: Task = {
+        id: taskId,
+        title,
+        description,
+        dueDate: dueDate.split("T")[0],
+      };
     onSave(updatedTask);
   };
+  
 
   return (
     <Modal show={show} onHide={handleClose}>
@@ -69,7 +84,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       </Modal.Header>
       <Modal.Body>
         {error && <div className="alert alert-danger">{error}</div>}
-        
+
         <Form>
           <Form.Group className="mb-3">
             <Form.Label>Title</Form.Label>

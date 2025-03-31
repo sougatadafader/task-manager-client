@@ -23,9 +23,14 @@ const TaskList: React.FC = () => {
       const data = await res.json();
       setTasks(data);
     } catch (err) {
-      console.error("Error fetching tasks:", err);
+      setToast({
+        show: true,
+        message: "Error fetching tasks. Please try again.",
+        bg: "danger",
+      });
     }
   };
+  
 
   const handleAddTask = () => {
     setIsEditMode(false);
@@ -52,7 +57,6 @@ const TaskList: React.FC = () => {
       );
   
       setShowModal(false);
-      await fetchTasks();
       setToast({
         show: true,
         message: "Task updated successfully!",
@@ -94,9 +98,12 @@ const TaskList: React.FC = () => {
           message: "Task added successfully!",
           bg: "success"
         });
-        await fetchTasks();
       } catch (err) {
-        console.error("Error adding task:", err);
+        setToast({
+          show: true,
+          message: "Error adding task",
+          bg: "danger",
+        });
       }
     }
   };
@@ -110,8 +117,7 @@ const TaskList: React.FC = () => {
       if (!res.ok) throw new Error("Failed to delete task");
   
       setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
-      await fetchTasks();
-  
+
       setToast({
         show: true,
         message: "Task deleted successfully!",
