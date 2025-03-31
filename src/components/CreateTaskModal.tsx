@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 import { Task } from "../types/Types";
+import { useEffect } from "react";
 
 interface CreateTaskModalProps {
   show: boolean;
@@ -26,7 +27,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [dueDate, setDueDate] = useState(initialDueDate);
-  const [error, setError] = useState<string>(""); // State for storing error messages
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    setTitle(initialTitle);
+    setDescription(initialDescription);
+    setDueDate(initialDueDate);
+    setError("");
+  }, [initialTitle, initialDescription, initialDueDate, show]);
 
   const handleSave = () => {
     if (!title.trim() || !description.trim() || !dueDate.trim()) {
@@ -60,7 +68,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         <Modal.Title>{isEditMode ? "Edit Task" : "Create Task"}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {/* Display error message if any */}
         {error && <div className="alert alert-danger">{error}</div>}
         
         <Form>

@@ -4,22 +4,27 @@ import FloatingButton from "../components/CreateTaskButton";
 import CreateTaskModal from "../components/CreateTaskModal";
 import { BASE_URL } from "../constants/Constants";
 import { Task } from "../types/Types";
+import ToastMessage from "../components/ToastMessage";
 
 const TaskList: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); 
+  const [isEditMode, setIsEditMode] = useState(false);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
+  const [toast, setToast] = useState({ show: false, message: "", bg: "danger" });
 
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  const fetchTasks = () => {
-    fetch(BASE_URL +"tasks")
-      .then((res) => res.json())
-      .then((data) => setTasks(data))
-      .catch((err) => console.error("Error fetching tasks:", err));
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}tasks`);
+      const data = await res.json();
+      setTasks(data);
+    } catch (err) {
+      console.error("Error fetching tasks:", err);
+    }
   };
 
   const handleAddTask = () => {
@@ -28,66 +33,99 @@ const TaskList: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleEditTask = (updatedTask: Task) => {
-    fetch(BASE_URL+ `tasks/${updatedTask.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(updatedTask),
-    })
-      .then((res) => res.json())
-      .then(() => {
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === updatedTask.id ? updatedTask : task
-          )
-        );
-        setShowModal(false);
-        fetchTasks();
-      })
-      .catch((err) => console.error("Error updating task:", err));
-  };
-
-  const handleTaskSubmit = (task: { title: string; description: string; dueDate: string }) => {
-    if (!task.title || !task.description || !task.dueDate || new Date(task.dueDate).toString() === 'Invalid Date') {
-      alert("Please make sure all fields are filled out correctly, and the date is valid.");
-      return;
-    }
-  
-    if (isEditMode && currentTask) {
-      const updatedTask = { ...task, id: currentTask.id };
-      handleEditTask(updatedTask);
-    } else {
-      fetch(BASE_URL+"tasks", {
-        method: "POST",
+  const handleEditTask = async (updatedTask: Task) => {
+    try {
+      const res = await fetch(`${BASE_URL}tasks/${updatedTask.id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(task),
-      })
-        .then((res) => res.json())
-        .then((newTask) => {
-          setTasks((prevTasks) => [...prevTasks, newTask]);
-          setShowModal(false);
-          fetchTasks();
-        })
-        .catch((err) => console.error("Error adding task:", err));
+        body: JSON.stringify(updatedTask),
+      });
+  
+      if (!res.ok) throw new Error("Failed to update task");
+  
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === updatedTask.id ? updatedTask : task
+        )
+      );
+  
+      setShowModal(false);
+      await fetchTasks();
+      setToast({
+        show: true,
+        message: "Task updated successfully!",
+        bg: "success",
+      });
+    } catch (err) {
+      setToast({
+        show: true,
+        message: "Error updating task",
+        bg: "danger",
+      });
     }
   };
   
 
-  const handleDeleteTask = (id: number) => {
-    fetch(BASE_URL + `tasks/${id}`, {
-      method: "DELETE",
-    })
-      .then(() => {
-        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
-        fetchTasks();
-      })
-      .catch((err) => console.error("Error deleting task:", err));
+  const handleTaskSubmit = async (task: {
+    title: string;
+    description: string;
+    dueDate: string;
+  }) => {
+    if (isEditMode && currentTask) {
+      const updatedTask = { ...task, id: currentTask.id };
+      await handleEditTask(updatedTask);
+    } else {
+      try {
+        const res = await fetch(`${BASE_URL}tasks`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(task),
+        });
+
+        const newTask = await res.json();
+        setTasks((prevTasks) => [...prevTasks, newTask]);
+        setShowModal(false);
+        setToast({
+          show: true,
+          message: "Task added successfully!",
+          bg: "success"
+        });
+        await fetchTasks();
+      } catch (err) {
+        console.error("Error adding task:", err);
+      }
+    }
   };
 
+  const handleDeleteTask = async (id: number) => {
+    try {
+      const res = await fetch(`${BASE_URL}tasks/${id}`, {
+        method: "DELETE",
+      });
+  
+      if (!res.ok) throw new Error("Failed to delete task");
+  
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+      await fetchTasks();
+  
+      setToast({
+        show: true,
+        message: "Task deleted successfully!",
+        bg: "success",
+      });
+    } catch (err) {
+      setToast({
+        show: true,
+        message: "Error deleting task. Please try again.",
+        bg: "danger",
+      });
+    }
+  };
+  
   return (
     <div className="container mt-4">
       <h2 className="mb-3">My Tasks</h2>
@@ -117,6 +155,12 @@ const TaskList: React.FC = () => {
         initialDescription={currentTask?.description || ""}
         initialDueDate={currentTask?.dueDate || ""}
         taskId={isEditMode ? currentTask?.id! : 0}
+      />
+      <ToastMessage
+        show={toast.show}
+        message={toast.message}
+        bg={toast.bg}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </div>
   );
